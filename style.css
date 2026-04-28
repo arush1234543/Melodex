@@ -859,8 +859,8 @@ body {
         --player-height: auto;
     }
 
-    body {
-        padding-bottom: 80px;
+    .player-bar{
+        margin-botton: 80px;
     }
 
     .head {
