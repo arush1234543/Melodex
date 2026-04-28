@@ -853,7 +853,7 @@ body {
 }
 
 
-@media (max-width: 768px) {
+@media (max-width: 1200px) {
     :root {
         --header-height: 56px;
         --player-height: auto;
