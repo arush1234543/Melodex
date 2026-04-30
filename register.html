@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Melodex - Sign Up</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      height: 100vh;
+      background: linear-gradient(135deg, #0a0a0a 0%, #2d0a47 50%, #1a0033 100%);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-family: 'Poppins', sans-serif;
+      overflow: hidden;
+      position: relative;
+    }
+
+    /* Animated background elements */
+    .bg-decoration {
+      position: fixed;
+      border-radius: 50%;
+      opacity: 0.05;
+      z-index: 0;
+    }
+
+    .blob1 {
+      width: 400px;
+      height: 400px;
+      background: #ff416c;
+      top: -100px;
+      right: -100px;
+      animation: float 20s infinite ease-in-out;
+    }
+
+    .blob2 {
+      width: 300px;
+      height: 300px;
+      background: #ff4b2b;
+      bottom: -100px;
+      left: -100px;
+      animation: float 25s infinite ease-in-out reverse;
+    }
+
+    @keyframes float {
+      0%, 100% { transform: translate(0, 0) rotate(0deg); }
+      50% { transform: translate(30px, 30px) rotate(180deg); }
+    }
+
+    .container {
+      background: rgba(20, 20, 35, 0.85);
+      backdrop-filter: blur(20px);
+      border: 1px solid rgba(255, 65, 108, 0.2);
+      padding: 50px 40px;
+      border-radius: 20px;
+      width: 100%;
+      max-width: 420px;
+      color: white;
+      box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5), 0 0 100px rgba(255, 65, 108, 0.1);
+      z-index: 10;
+      animation: slideUp 0.8s ease-out;
+    }
+
+    @keyframes slideUp {
+      from {
+        opacity: 0;
+        transform: translateY(30px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .logo {
+      font-size: 2rem;
+      font-weight: 700;
+      text-align: center;
+      margin-bottom: 10px;
+      background: linear-gradient(135deg, #ff416c, #ff4b2b);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .subtitle {
+      text-align: center;
+      color: #b3b3b3;
+      font-size: 14px;
+      margin-bottom: 40px;
+    }
+
+    h2 {
+      text-align: center;
+      margin-bottom: 30px;
+      font-size: 1.5rem;
+      font-weight: 700;
+    }
+
+    .input-group {
+      margin-bottom: 20px;
+    }
+
+    label {
+      display: block;
+      font-size: 12px;
+      font-weight: 600;
+      color: #b3b3b3;
+      margin-bottom: 8px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    input {
+      width: 100%;
+      padding: 14px 16px;
+      border: 1px solid rgba(255, 65, 108, 0.3);
+      border-radius: 10px;
+      outline: none;
+      background: rgba(30, 30, 50, 0.8);
+      color: white;
+      font-family: inherit;
+      font-size: 14px;
+      transition: all 0.3s ease;
+    }
+
+    input::placeholder {
+      color: #717171;
+    }
+
+    input:focus {
+      border-color: #ff416c;
+      background: rgba(30, 30, 50, 0.95);
+      box-shadow: 0 0 0 3px rgba(255, 65, 108, 0.15);
+    }
+
+    .password-requirements {
+      font-size: 12px;
+      color: #b3b3b3;
+      margin-top: 8px;
+      padding: 10px;
+      background: rgba(255, 65, 108, 0.05);
+      border-radius: 6px;
+      display: none;
+    }
+
+    .password-requirements.show {
+      display: block;
+    }
+
+    .requirement {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-bottom: 4px;
+    }
+
+    .requirement.met {
+      color: #1db954;
+    }
+
+    .requirement-dot {
+      width: 4px;
+      height: 4px;
+      border-radius: 50%;
+      background: currentColor;
+    }
+
+    .register-btn {
+      width: 100%;
+      padding: 14px;
+      border: none;
+      border-radius: 10px;
+      background: linear-gradient(135deg, #ff416c, #ff4b2b);
+      color: white;
+      font-size: 16px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      margin-top: 10px;
+      box-shadow: 0 8px 20px rgba(255, 65, 108, 0.3);
+    }
+
+    .register-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 12px 30px rgba(255, 65, 108, 0.4);
+    }
+
+    .register-btn:active {
+      transform: translateY(0);
+    }
+
+    .register-btn:disabled {
+      opacity: 0.7;
+      cursor: not-allowed;
+    }
+
+    .divider {
+      display: flex;
+      align-items: center;
+      margin: 30px 0;
+      gap: 10px;
+    }
+
+    .divider::before,
+    .divider::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: rgba(255, 255, 255, 0.1);
+    }
+
+    .divider-text {
+      color: #717171;
+      font-size: 13px;
+    }
+
+    .footer {
+      text-align: center;
+      margin-top: 30px;
+    }
+
+    .footer-text {
+      color: #b3b3b3;
+      font-size: 14px;
+      margin-bottom: 10px;
+    }
+
+    .footer a {
+      color: #ff416c;
+      text-decoration: none;
+      font-weight: 600;
+      transition: all 0.3s ease;
+    }
+
+    .footer a:hover {
+      color: #ff4b2b;
+      text-decoration: underline;
+    }
+
+    .error-message {
+      display: none;
+      background: rgba(255, 69, 69, 0.1);
+      border: 1px solid #ff4545;
+      color: #ff8787;
+      padding: 12px 14px;
+      border-radius: 8px;
+      font-size: 13px;
+      margin-bottom: 20px;
+      animation: slideDown 0.3s ease-out;
+    }
+
+    .error-message.show {
+      display: block;
+    }
+
+    .error-message.success {
+      background: rgba(29, 185, 84, 0.1);
+      border-color: #1db954;
+      color: #1ed760;
+    }
+
+    @keyframes slideDown {
+      from {
+        opacity: 0;
+        transform: translateY(-10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .loading {
+      display: none;
+      text-align: center;
+      padding: 20px 0;
+    }
+
+    .spinner {
+      width: 20px;
+      height: 20px;
+      border: 2px solid rgba(255, 65, 108, 0.3);
+      border-top-color: #ff416c;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin: 0 auto;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    @media (max-width: 480px) {
+      .container {
+        padding: 40px 30px;
+        width: 90%;
+      }
+
+      h2 {
+        font-size: 1.3rem;
+      }
+
+      input {
+        padding: 12px 14px;
+        font-size: 13px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="bg-decoration blob1"></div>
+  <div class="bg-decoration blob2"></div>
+
+  <div class="container">
+    <div class="logo">♪ Melodex</div>
+    <div class="subtitle">Join the Music Revolution</div>
+    
+    <h2>Create Account</h2>
+
+    <div class="error-message" id="errorMessage"></div>
+
+    <div class="input-group">
+      <label for="email">Email Address</label>
+      <input type="email" id="email" placeholder="your@email.com" autocomplete="email">
+    </div>
+
+    <div class="input-group">
+      <label for="password">Password</label>
+      <input type="password" id="password" placeholder="••••••••" autocomplete="new-password">
+      <div class="password-requirements" id="passwordReqs">
+        <div class="requirement" id="req-length">
+          <span class="requirement-dot"></span>
+          At least 6 characters
+        </div>
+        <div class="requirement" id="req-uppercase">
+          <span class="requirement-dot"></span>
+          One uppercase letter
+        </div>
+        <div class="requirement" id="req-number">
+          <span class="requirement-dot"></span>
+          One number
+        </div>
+      </div>
+    </div>
+
+    <div class="input-group">
+      <label for="confirm-password">Confirm Password</label>
+      <input type="password" id="confirm-password" placeholder="••••••••" autocomplete="new-password">
+    </div>
+
+    <button class="register-btn" onclick="register()" id="registerBtn">Create Account</button>
+
+    <div class="loading" id="loadingSpinner">
+      <div class="spinner"></div>
+    </div>
+
+    <div class="divider">
+      <span class="divider-text">Already have an account?</span>
+    </div>
+
+    <div class="footer">
+      <div class="footer-text">Sign in to your account</div>
+      <a href="login.html">Login Here</a>
+    </div>
+  </div>
+
+  <script>
+    const emailInput = document.getElementById("email");
+    const passwordInput = document.getElementById("password");
+    const confirmPasswordInput = document.getElementById("confirm-password");
+    const registerBtn = document.getElementById("registerBtn");
+    const errorMessage = document.getElementById("errorMessage");
+    const loadingSpinner = document.getElementById("loadingSpinner");
+    const passwordReqs = document.getElementById("passwordReqs");
+
+    // Password validation
+    passwordInput.addEventListener('input', (e) => {
+      const password = e.target.value;
+      const hasLength = password.length >= 6;
+      const hasUppercase = /[A-Z]/.test(password);
+      const hasNumber = /[0-9]/.test(password);
+
+      document.getElementById('req-length').classList.toggle('met', hasLength);
+      document.getElementById('req-uppercase').classList.toggle('met', hasUppercase);
+      document.getElementById('req-number').classList.toggle('met', hasNumber);
+
+      if (password.length > 0) {
+        passwordReqs.classList.add('show');
+      } else {
+        passwordReqs.classList.remove('show');
+      }
+    });
+
+    // Enter key support
+    document.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter' && (document.activeElement === emailInput || document.activeElement === passwordInput || document.activeElement === confirmPasswordInput)) {
+        register();
+      }
+    });
+
+    function showError(message, isSuccess = false) {
+      errorMessage.textContent = message;
+      errorMessage.classList.add('show');
+      if (isSuccess) {
+        errorMessage.classList.add('success');
+      } else {
+        errorMessage.classList.remove('success');
+      }
+      if (!isSuccess) {
+        setTimeout(() => {
+          errorMessage.classList.remove('show');
+        }, 5000);
+      }
+    }
+
+    function register() {
+      const email = emailInput.value.trim();
+      const password = passwordInput.value.trim();
+      const confirmPassword = confirmPasswordInput.value.trim();
+
+      // Validation
+      if (!email || !password || !confirmPassword) {
+        showError('Please fill in all fields');
+        return;
+      }
+
+      if (!email.includes('@')) {
+        showError('Please enter a valid email address');
+        return;
+      }
+
+      if (password.length < 6) {
+        showError('Password must be at least 6 characters');
+        return;
+      }
+
+      if (!/[A-Z]/.test(password)) {
+        showError('Password must contain at least one uppercase letter');
+        return;
+      }
+
+      if (!/[0-9]/.test(password)) {
+        showError('Password must contain at least one number');
+        return;
+      }
+
+      if (password !== confirmPassword) {
+        showError('Passwords do not match');
+        return;
+      }
+
+      // Show loading state
+      registerBtn.disabled = true;
+      loadingSpinner.style.display = 'block';
+      errorMessage.classList.remove('show');
+
+      fetch("http://localhost:3000/register", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ email, password })
+      })
+      .then(res => res.json())
+      .then(data => {
+        registerBtn.disabled = false;
+        loadingSpinner.style.display = 'none';
+
+        if (data.message === "Registered successfully") {
+          showError('Account created successfully! Redirecting to login...', true);
+          setTimeout(() => {
+            window.location.href = "login.html";
+          }, 1500);
+        } else if (data.message === "User already exists") {
+          showError('Email already registered. Please use a different email or login.');
+        } else {
+          showError(data.message || 'Registration failed');
+        }
+      })
+      .catch(err => {
+        registerBtn.disabled = false;
+        loadingSpinner.style.display = 'none';
+        console.error("Register error:", err);
+        showError('Connection error. Make sure the server is running on http://localhost:3000');
+      });
+    }
+  </script>
+
+</body>
+</html> 

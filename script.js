@@ -40,12 +40,44 @@ const deleteSVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" w
 let songs = [];
 let currentIndex = -1;
 
+// ── Recent songs helpers ─────────────────────────────────────────────────────
+const MAX_RECENT = 5;
 
+function getRecentSongs() {
+    try {
+        return JSON.parse(localStorage.getItem('melodexRecent') || '[]');
+    } catch { return []; }
+}
+
+function addToRecent(song) {
+    let recent = getRecentSongs();
+    // Remove duplicate
+    recent = recent.filter(s => s.src !== song.src);
+    // Add to front
+    recent.unshift({ name: song.name, artist: song.artist, img: song.img, src: song.src });
+    // Keep only last MAX_RECENT
+    recent = recent.slice(0, MAX_RECENT);
+    localStorage.setItem('melodexRecent', JSON.stringify(recent));
+}
+
+function saveLastSong(song, index) {
+    localStorage.setItem('melodexLastSong', JSON.stringify({ song, index }));
+}
+
+function getLastSong() {
+    try {
+        return JSON.parse(localStorage.getItem('melodexLastSong') || 'null');
+    } catch { return null; }
+}
+
+// ── Init ─────────────────────────────────────────────────────────────────────
 function init() {
     loadSongs();
     renderPlaylist();
     renderCards('');
     setupEventListeners();
+    renderAuth();
+    showResumeBanner();
 }
 
 function loadSongs() {
@@ -91,7 +123,6 @@ function getDefaultSongs() {
     ];
 }
 
-
 function saveSongs() {
     try {
         localStorage.setItem('melodexSongs', JSON.stringify(songs));
@@ -100,6 +131,51 @@ function saveSongs() {
     }
 }
 
+// ── Resume Banner ────────────────────────────────────────────────────────────
+function showResumeBanner() {
+    const lastSong = getLastSong();
+    if (!lastSong) return;
+
+    const banner = document.getElementById('resumeBanner');
+    if (!banner) return;
+
+    document.getElementById('resumeThumb').style.backgroundImage = `url('${lastSong.song.img}')`;
+    document.getElementById('resumeSongName').textContent = lastSong.song.name;
+    document.getElementById('resumeSongArtist').textContent = lastSong.song.artist;
+
+    banner.classList.add('visible');
+
+    banner.querySelector('.resume-play-btn').addEventListener('click', (e) => {
+        e.stopPropagation();
+        // Try to find song in current library
+        const idx = songs.findIndex(s => s.src === lastSong.song.src);
+        if (idx !== -1) {
+            playSong(idx);
+        } else {
+            // Song was removed; just load it directly
+            playSongDirect(lastSong.song);
+        }
+        banner.classList.remove('visible');
+    });
+
+    banner.querySelector('.resume-dismiss').addEventListener('click', (e) => {
+        e.stopPropagation();
+        banner.classList.remove('visible');
+        localStorage.removeItem('melodexLastSong');
+    });
+}
+
+function playSongDirect(song) {
+    audio.src = song.src;
+    audio.load();
+    audio.play().catch(err => console.error('Error playing audio:', err));
+    trackNameEl.textContent = song.name;
+    artistNameEl.textContent = song.artist;
+    nowThumb.style.backgroundImage = `url('${song.img}')`;
+    masterPlay.innerHTML = pauseSVG;
+}
+
+// ── Render ───────────────────────────────────────────────────────────────────
 function renderCards(filter = '') {
     cardContainer.innerHTML = '';
     const filtered = filterSongs(filter);
@@ -188,6 +264,10 @@ function playSong(index) {
     nowThumb.style.backgroundImage = `url('${song.img}')`;
     masterPlay.innerHTML = pauseSVG;
 
+    // Track recent songs and last song
+    addToRecent(song);
+    saveLastSong(song, index);
+
     renderCards(searchInput.value.toLowerCase());
     renderPlaylist();
 }
@@ -206,30 +286,31 @@ function togglePlay() {
     renderCards(searchInput.value.toLowerCase());
 }
 
-function playPrevious() {
-    const newIndex = currentIndex <= 0 ? songs.length - 1 : currentIndex - 1;
-    playSong(newIndex);
+function playNext() {
+    if (songs.length === 0) return;
+    const nextIndex = (currentIndex + 1) % songs.length;
+    playSong(nextIndex);
 }
 
-function playNext() {
-    const newIndex = currentIndex >= songs.length - 1 ? 0 : currentIndex + 1;
-    playSong(newIndex);
+function playPrevious() {
+    if (songs.length === 0) return;
+    const prevIndex = (currentIndex - 1 + songs.length) % songs.length;
+    playSong(prevIndex);
+}
+
+function filterSongs(filter) {
+    if (!filter) return songs;
+    return songs.filter(song =>
+        song.name.toLowerCase().includes(filter) ||
+        song.artist.toLowerCase().includes(filter)
+    );
 }
 
 function formatTime(seconds) {
-    if (!isFinite(seconds)) return '0:00';
-    const mins = Math.floor(seconds / 60);
-    const secs = Math.floor(seconds % 60);
-    return `${mins}:${secs.toString().padStart(2, '0')}`;
-}
-
-function filterSongs(query) {
-    if (!query.trim()) return songs;
-    const q = query.toLowerCase();
-    return songs.filter(song =>
-        song.name.toLowerCase().includes(q) ||
-        song.artist.toLowerCase().includes(q)
-    );
+    if (!seconds || isNaN(seconds)) return '0:00';
+    const m = Math.floor(seconds / 60);
+    const s = Math.floor(seconds % 60);
+    return `${m}:${s.toString().padStart(2, '0')}`;
 }
 
 function escapeHtml(text) {
@@ -313,10 +394,16 @@ function setupEventListeners() {
     });
 
     document.addEventListener('click', (e) => {
+        // Close sidebar
         if (navbar.classList.contains('open') &&
             !navbar.contains(e.target) &&
             e.target !== sidebarToggle) {
             navbar.classList.remove('open');
+        }
+        // Close profile dropdown
+        const wrapper = document.querySelector('.profile-wrapper');
+        if (wrapper && !wrapper.contains(e.target)) {
+            closeProfileDropdown();
         }
     });
 
@@ -402,5 +489,160 @@ function confirmAdd() {
     playSong(songs.length - 1);
 }
 
+// ── Auth & Profile Dropdown ──────────────────────────────────────────────────
+const authArea = document.getElementById("authArea");
+
+function renderAuth() {
+    const token = localStorage.getItem("token");
+    const email = localStorage.getItem("userEmail");
+
+    if (token && email) {
+        const firstLetter = email.charAt(0).toUpperCase();
+        authArea.innerHTML = `
+            <div class="profile-wrapper">
+                <div class="profile-circle" id="profileCircle" aria-label="Profile menu" role="button" tabindex="0">
+                    ${firstLetter}
+                </div>
+                <div class="profile-dropdown" id="profileDropdown">
+                    <div class="dropdown-header">
+                        <div class="dropdown-email">${escapeHtml(email)}</div>
+                        <div class="dropdown-label">Logged in</div>
+                    </div>
+                    <div class="dropdown-section-title">Recently Played</div>
+                    <div class="recent-songs-list" id="dropdownRecentList"></div>
+                    <div class="dropdown-divider"></div>
+                    <div class="dropdown-actions">
+                        <div class="dropdown-action-item" id="ddAddSong">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
+                            Add Song
+                        </div>
+                        <div class="dropdown-action-item" id="ddShuffle">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 3h5v5M4 20 21 3M21 16v5h-5M15 15l6 6M4 4l5 5"/></svg>
+                            Shuffle Play
+                        </div>
+                        <div class="dropdown-action-item" id="ddClearRecent">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/></svg>
+                            Clear History
+                        </div>
+                        <div class="dropdown-action-item danger" id="ddLogout">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></svg>
+                            Log Out
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        renderDropdownRecent();
+
+        document.getElementById('profileCircle').addEventListener('click', (e) => {
+            e.stopPropagation();
+            toggleProfileDropdown();
+        });
+
+        document.getElementById('ddAddSong').addEventListener('click', () => {
+            closeProfileDropdown();
+            openAddModal();
+        });
+
+        document.getElementById('ddShuffle').addEventListener('click', () => {
+            closeProfileDropdown();
+            if (songs.length === 0) return;
+            const randIdx = Math.floor(Math.random() * songs.length);
+            playSong(randIdx);
+        });
+
+        document.getElementById('ddClearRecent').addEventListener('click', () => {
+            localStorage.removeItem('melodexRecent');
+            localStorage.removeItem('melodexLastSong');
+            renderDropdownRecent();
+            const banner = document.getElementById('resumeBanner');
+            if (banner) banner.classList.remove('visible');
+        });
+
+        document.getElementById('ddLogout').addEventListener('click', () => {
+            logout();
+        });
+
+    } else {
+        authArea.innerHTML = `
+            <button class="btn login-btn" onclick="goLogin()">Login</button>
+            <button class="btn signup-btn" onclick="goSignup()">Sign Up</button>
+        `;
+    }
+}
+
+function renderDropdownRecent() {
+    const list = document.getElementById('dropdownRecentList');
+    if (!list) return;
+
+    const recent = getRecentSongs();
+    if (recent.length === 0) {
+        list.innerHTML = `<div style="padding: 6px 10px 10px; font-size: 12px; color: var(--text-subdim);">Nothing played yet</div>`;
+        return;
+    }
+
+    list.innerHTML = recent.map((song, i) => `
+        <div class="recent-song-item" data-recent-idx="${i}">
+            <div class="recent-song-thumb" style="background-image: url('${song.img}')"></div>
+            <div class="recent-song-info">
+                <div class="recent-song-name">${escapeHtml(song.name)}</div>
+                <div class="recent-song-artist">${escapeHtml(song.artist)}</div>
+            </div>
+            <div class="recent-song-play-icon">
+                <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+            </div>
+        </div>
+    `).join('');
+
+    list.querySelectorAll('.recent-song-item').forEach(item => {
+        item.addEventListener('click', () => {
+            const song = recent[parseInt(item.dataset.recentIdx)];
+            const idx = songs.findIndex(s => s.src === song.src);
+            if (idx !== -1) {
+                playSong(idx);
+            } else {
+                playSongDirect(song);
+            }
+            closeProfileDropdown();
+        });
+    });
+}
+
+function toggleProfileDropdown() {
+    const dropdown = document.getElementById('profileDropdown');
+    const circle = document.getElementById('profileCircle');
+    if (!dropdown) return;
+
+    const isOpen = dropdown.classList.contains('open');
+    if (isOpen) {
+        closeProfileDropdown();
+    } else {
+        renderDropdownRecent(); // Refresh before opening
+        dropdown.classList.add('open');
+        circle && circle.classList.add('active');
+    }
+}
+
+function closeProfileDropdown() {
+    const dropdown = document.getElementById('profileDropdown');
+    const circle = document.getElementById('profileCircle');
+    if (dropdown) dropdown.classList.remove('open');
+    if (circle) circle.classList.remove('active');
+}
+
+function goLogin() {
+    window.location.href = "login.html";
+}
+
+function goSignup() {
+    window.location.href = "register.html";
+}
+
+function logout() {
+    localStorage.removeItem("token");
+    localStorage.removeItem("userEmail");
+    location.reload();
+}
 
 init();
